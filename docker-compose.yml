@@ -1,0 +1,27 @@
+services:
+  # 1. FLASK (Backend application - Internal docker network only)
+  flask-app:
+    build: .
+    container_name: empires-server
+    restart: always
+    expose:
+      - "5111" 
+    volumes:
+      - ./instance:/app/instance
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # 2. NGINX (Reverse Proxy - Maps ${WEB_IP}:${WEB_PORT} -> nginx:80 -> flask-app:5111)
+  nginx:
+    image: nginx:alpine
+    container_name: empires-nginx
+    restart: always
+    ports:
+      - "${WEB_IP:-127.0.0.1}:${WEB_PORT:-5100}:80" 
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - flask-app
